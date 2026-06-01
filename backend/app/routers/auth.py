@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, EmailStr
-from typing import Optional
+from pydantic import BaseModel
+import traceback
 from .. import models
 from ..database import get_db
 from ..auth import hash_password, verify_password, create_access_token, get_current_user
@@ -32,24 +32,35 @@ class TokenResponse(BaseModel):
     user: UserOut
 
 
-@router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/register", status_code=status.HTTP_201_CREATED)
 def register(data: RegisterRequest, db: Session = Depends(get_db)):
-    if db.query(models.User).filter(models.User.email == data.email).first():
-        raise HTTPException(status_code=400, detail="Email already registered")
-    if len(data.password) < 6:
-        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    try:
+        if db.query(models.User).filter(models.User.email == data.email).first():
+            raise HTTPException(status_code=400, detail="Email already registered")
+        if len(data.password) < 6:
+            raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
 
-    user = models.User(
-        name=data.name,
-        email=data.email,
-        hashed_password=hash_password(data.password),
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+        user = models.User(
+            name=data.name,
+            email=data.email,
+            hashed_password=hash_password(data.password),
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
 
-    token = create_access_token({"sub": str(user.id)})
-    return TokenResponse(access_token=token, token_type="bearer", user=UserOut.model_validate(user))
+        token = create_access_token({"sub": str(user.id)})
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "user": {"id": user.id, "name": user.name, "email": user.email, "is_active": user.is_active}
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        print(f"REGISTER ERROR: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Registration error: {str(e)}")
 
 
 @router.post("/login", response_model=TokenResponse)
