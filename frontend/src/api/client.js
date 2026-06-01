@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api'
+// Use relative /api so Vercel proxies to Railway — eliminates CORS entirely
+const API_BASE = '/api'
 
 const client = axios.create({
   baseURL: API_BASE,
