@@ -156,15 +156,19 @@ def update_order(order_id: int, order_update: schemas.OrderUpdate, db: Session =
     old_status = order.status
     new_status = update_data.get("status", old_status)
 
-    # Restore stock when order is cancelled (and wasn't already cancelled)
-    if new_status == models.OrderStatus.cancelled and old_status != models.OrderStatus.cancelled:
+    # Stock is "held in warehouse" only for pending/confirmed orders.
+    # Once shipped/delivered, the items have physically left.
+    in_warehouse = {models.OrderStatus.pending, models.OrderStatus.confirmed}
+
+    # Restore stock: items go from "held" back to "available"
+    if old_status in in_warehouse and new_status == models.OrderStatus.cancelled:
         for item in order.items:
             product = db.query(models.Product).filter(models.Product.id == item.product_id).first()
             if product:
                 product.stock_quantity += item.quantity
 
-    # Re-deduct stock if reactivating a cancelled order
-    if old_status == models.OrderStatus.cancelled and new_status != models.OrderStatus.cancelled:
+    # Re-deduct stock: reactivating a cancelled order back to pending/confirmed
+    if old_status == models.OrderStatus.cancelled and new_status in in_warehouse:
         for item in order.items:
             product = db.query(models.Product).filter(models.Product.id == item.product_id).first()
             if not product or product.stock_quantity < item.quantity:
@@ -215,8 +219,10 @@ def delete_order(order_id: int, db: Session = Depends(get_db)):
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    # Restore stock if the order wasn't already cancelled
-    if order.status != models.OrderStatus.cancelled:
+    # Only restore stock if items are still in the warehouse (pending/confirmed).
+    # Once shipped or delivered, they've physically left — don't put them back.
+    in_warehouse = {models.OrderStatus.pending, models.OrderStatus.confirmed}
+    if order.status in in_warehouse:
         for item in order.items:
             product = db.query(models.Product).filter(models.Product.id == item.product_id).first()
             if product:

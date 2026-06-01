@@ -68,9 +68,11 @@ def delete_customer(customer_id: int, db: Session = Depends(get_db)):
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
 
-    # Restore stock for non-cancelled orders, then delete all the customer's orders
+    # Restore stock only for orders still in the warehouse (pending/confirmed).
+    # Shipped/delivered items have left already; cancelled were already restored.
+    in_warehouse = {models.OrderStatus.pending, models.OrderStatus.confirmed}
     for order in customer.orders:
-        if order.status != models.OrderStatus.cancelled:
+        if order.status in in_warehouse:
             for item in order.items:
                 product = db.query(models.Product).filter(models.Product.id == item.product_id).first()
                 if product:
