@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
+html, body {
   @apply bg-gray-50 text-gray-900;
+}
+html.dark, html.dark body {
+  @apply bg-gray-950 text-gray-100;
+}
+
+@media print {
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area { position: absolute; top: 0; left: 0; width: 100%; padding: 2rem; }
+  .no-print { display: none !important; }
 }
