@@ -59,5 +59,19 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
     product = db.query(models.Product).filter(models.Product.id == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
+
+    # Block deletion if product has any active orders
+    active_count = db.query(models.OrderItem).join(models.Order).filter(
+        models.OrderItem.product_id == product_id,
+        models.Order.status != models.OrderStatus.cancelled,
+    ).count()
+    if active_count > 0:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot delete: product is in {active_count} active order(s). Cancel them first."
+        )
+
+    # Safe to delete: remove cancelled-order line items first
+    db.query(models.OrderItem).filter(models.OrderItem.product_id == product_id).delete()
     db.delete(product)
     db.commit()

@@ -67,5 +67,15 @@ def delete_customer(customer_id: int, db: Session = Depends(get_db)):
     customer = db.query(models.Customer).filter(models.Customer.id == customer_id).first()
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
+
+    # Restore stock for non-cancelled orders, then delete all the customer's orders
+    for order in customer.orders:
+        if order.status != models.OrderStatus.cancelled:
+            for item in order.items:
+                product = db.query(models.Product).filter(models.Product.id == item.product_id).first()
+                if product:
+                    product.stock_quantity += item.quantity
+        db.delete(order)
+
     db.delete(customer)
     db.commit()
