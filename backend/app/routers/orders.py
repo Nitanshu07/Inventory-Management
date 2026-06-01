@@ -7,7 +7,7 @@ from ..database import get_db
 router = APIRouter(prefix="/orders", tags=["orders"])
 
 
-@router.get("/", response_model=List[schemas.OrderDetail])
+@router.get("", response_model=List[schemas.OrderDetail])
 def list_orders(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     orders = db.query(models.Order).offset(skip).limit(limit).all()
     result = []
@@ -37,7 +37,7 @@ def list_orders(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return result
 
 
-@router.post("/", response_model=schemas.OrderDetail, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=schemas.OrderDetail, status_code=status.HTTP_201_CREATED)
 def create_order(order_data: schemas.OrderCreate, db: Session = Depends(get_db)):
     customer = db.query(models.Customer).filter(models.Customer.id == order_data.customer_id).first()
     if not customer:

@@ -14,6 +14,7 @@ app = FastAPI(
     title="Inventory & Order Management System",
     description="API for managing products, customers, orders, and inventory tracking",
     version="1.0.0",
+    redirect_slashes=False,
 )
 
 app.add_middleware(

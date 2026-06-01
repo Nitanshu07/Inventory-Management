@@ -7,7 +7,7 @@ from ..database import get_db
 router = APIRouter(prefix="/products", tags=["products"])
 
 
-@router.get("/", response_model=List[schemas.Product])
+@router.get("", response_model=List[schemas.Product])
 def list_products(skip: int = 0, limit: int = 100, search: Optional[str] = None, db: Session = Depends(get_db)):
     query = db.query(models.Product)
     if search:
@@ -18,7 +18,7 @@ def list_products(skip: int = 0, limit: int = 100, search: Optional[str] = None,
     return query.offset(skip).limit(limit).all()
 
 
-@router.post("/", response_model=schemas.Product, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=schemas.Product, status_code=status.HTTP_201_CREATED)
 def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)):
     existing = db.query(models.Product).filter(models.Product.sku == product.sku).first()
     if existing:
