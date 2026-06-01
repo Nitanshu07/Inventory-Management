@@ -2,22 +2,18 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { statsApi, productsApi, ordersApi } from '../api/client'
 import { Package, Users, ShoppingCart, AlertTriangle, DollarSign, TrendingUp, ArrowRight } from 'lucide-react'
-import Sparkline from '../components/Sparkline'
 import { StatSkeleton, Skeleton } from '../components/Skeleton'
 
-function StatCard({ label, value, icon: Icon, color, sparkData, sparkColor }) {
+function StatCard({ label, value, icon: Icon, color }) {
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border dark:border-gray-800 p-5 flex items-center justify-between gap-4">
-      <div className="flex items-center gap-4 min-w-0">
-        <div className={`p-3 rounded-lg ${color} shrink-0`}>
-          <Icon size={22} className="text-white" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">{label}</p>
-          <p className="text-2xl font-bold dark:text-gray-100 truncate">{value}</p>
-        </div>
+    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border dark:border-gray-800 p-5 flex items-center gap-4">
+      <div className={`p-3 rounded-lg ${color} shrink-0`}>
+        <Icon size={22} className="text-white" />
       </div>
-      {sparkData && <Sparkline data={sparkData} color={sparkColor} width={70} height={32} />}
+      <div className="min-w-0">
+        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">{label}</p>
+        <p className="text-2xl font-bold dark:text-gray-100 truncate">{value}</p>
+      </div>
     </div>
   )
 }
@@ -47,19 +43,6 @@ export default function Dashboard() {
     ]).finally(() => setLoading(false))
   }, [])
 
-  // Build last-7-days series
-  const series = (() => {
-    const days = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date()
-      d.setDate(d.getDate() - (6 - i))
-      return d.toISOString().slice(0, 10)
-    })
-    const orderCounts = days.map(day => orders.filter(o => o.created_at?.startsWith(day)).length)
-    const revenueDay = days.map(day => orders.filter(o => o.created_at?.startsWith(day))
-      .reduce((s, o) => s + o.total_amount, 0))
-    return { orderCounts, revenueDay }
-  })()
-
   const recentOrders = [...orders].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5)
 
   return (
@@ -77,22 +60,13 @@ export default function Dashboard() {
           <>
             <StatCard label="Products" value={stats?.total_products ?? 0} icon={Package} color="bg-blue-500" />
             <StatCard label="Customers" value={stats?.total_customers ?? 0} icon={Users} color="bg-green-500" />
-            <StatCard
-              label="Orders"
-              value={stats?.total_orders ?? 0}
-              icon={ShoppingCart}
-              color="bg-purple-500"
-              sparkData={series.orderCounts}
-              sparkColor="#a855f7"
-            />
+            <StatCard label="Orders" value={stats?.total_orders ?? 0} icon={ShoppingCart} color="bg-purple-500" />
             <StatCard label="Low Stock" value={stats?.low_stock_products ?? 0} icon={AlertTriangle} color="bg-orange-500" />
             <StatCard
               label="Revenue"
               value={`$${(stats?.total_revenue || 0).toFixed(2)}`}
               icon={DollarSign}
               color="bg-emerald-500"
-              sparkData={series.revenueDay}
-              sparkColor="#10b981"
             />
           </>
         )}

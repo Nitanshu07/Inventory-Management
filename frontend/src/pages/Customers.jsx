@@ -5,7 +5,7 @@ import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
 import { TableSkeleton } from '../components/Skeleton'
 import { SortableHeader, useSort } from '../components/SortableHeader'
-import { exportCSV } from '../utils/csv'
+import { exportCSV, formatDate } from '../utils/csv'
 import { Plus, Pencil, Trash2, Search, Users, Download } from 'lucide-react'
 
 const empty = { name: '', email: '', phone: '', address: '' }
@@ -98,12 +98,12 @@ export default function Customers() {
 
   const handleExport = () => {
     exportCSV(sorted, [
-      { key: 'id', label: 'ID' },
-      { key: 'name', label: 'Name' },
-      { key: 'email', label: 'Email' },
-      { key: 'phone', label: 'Phone' },
+      { key: 'id', label: 'Customer ID' },
+      { key: 'name', label: 'Full Name' },
+      { key: 'email', label: 'Email Address' },
+      { key: 'phone', label: 'Phone Number' },
       { key: 'address', label: 'Address' },
-      { key: 'created_at', label: 'Created' },
+      { key: 'created_at', label: 'Joined On', format: formatDate },
     ], `customers-${new Date().toISOString().slice(0,10)}.csv`)
   }
 

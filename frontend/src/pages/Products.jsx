@@ -5,7 +5,7 @@ import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
 import { TableSkeleton } from '../components/Skeleton'
 import { SortableHeader, useSort } from '../components/SortableHeader'
-import { exportCSV } from '../utils/csv'
+import { exportCSV, formatDate, formatCurrency } from '../utils/csv'
 import { Plus, Pencil, Trash2, Search, Package, Download, AlertTriangle } from 'lucide-react'
 
 const empty = { name: '', sku: '', description: '', price: '', stock_quantity: '' }
@@ -115,13 +115,14 @@ export default function Products() {
 
   const handleExport = () => {
     exportCSV(sorted, [
-      { key: 'id', label: 'ID' },
-      { key: 'name', label: 'Name' },
+      { key: 'id', label: 'Product ID' },
+      { key: 'name', label: 'Product Name' },
       { key: 'sku', label: 'SKU' },
       { key: 'description', label: 'Description' },
-      { key: 'price', label: 'Price' },
-      { key: 'stock_quantity', label: 'Stock' },
-      { key: 'created_at', label: 'Created' },
+      { key: 'price', label: 'Price (USD)', format: formatCurrency },
+      { key: 'stock_quantity', label: 'Stock Quantity' },
+      { key: 'created_at', label: 'Created At', format: formatDate },
+      { key: 'updated_at', label: 'Last Updated', format: formatDate },
     ], `products-${new Date().toISOString().slice(0,10)}.csv`)
   }
 

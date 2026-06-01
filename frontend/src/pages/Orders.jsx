@@ -5,7 +5,7 @@ import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
 import { TableSkeleton } from '../components/Skeleton'
 import { SortableHeader, useSort } from '../components/SortableHeader'
-import { exportCSV } from '../utils/csv'
+import { exportCSV, formatDate, formatCurrency } from '../utils/csv'
 import { Plus, Eye, Trash2, X, ShoppingCart, Download, Printer, Truck, Check, Circle } from 'lucide-react'
 
 const STATUS_COLORS = {
@@ -171,16 +171,115 @@ function OrderDetailModal({ order, onClose, onUpdated }) {
     } finally { setSaving(false) }
   }
 
-  const handlePrint = () => window.print()
+  const handlePrint = () => {
+    const itemsRows = order.items.map(item => `
+      <tr>
+        <td>${item.product_name}</td>
+        <td style="font-family:monospace;color:#666">${item.product_sku}</td>
+        <td>${item.quantity}</td>
+        <td>$${item.unit_price.toFixed(2)}</td>
+        <td style="text-align:right">$${(item.quantity * item.unit_price).toFixed(2)}</td>
+      </tr>
+    `).join('')
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Invoice #${order.id}</title>
+        <style>
+          * { box-sizing: border-box; }
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; color: #1f2937; }
+          h1 { margin: 0 0 4px; font-size: 32px; letter-spacing: -0.02em; }
+          .subtitle { color: #6b7280; margin-bottom: 32px; font-size: 14px; }
+          .header { display: flex; justify-content: space-between; border-bottom: 2px solid #1f2937; padding-bottom: 16px; margin-bottom: 24px; }
+          .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px; font-size: 14px; }
+          .meta-label { color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+          .meta-value { font-weight: 600; }
+          .status-badge { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; text-transform: capitalize; background: #dbeafe; color: #1e40af; }
+          table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+          th { text-align: left; padding: 12px; border-bottom: 2px solid #1f2937; font-size: 12px; text-transform: uppercase; color: #6b7280; letter-spacing: 0.05em; }
+          td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+          .total-row td { border-top: 2px solid #1f2937; border-bottom: none; font-weight: 700; padding-top: 16px; font-size: 16px; }
+          .notes { margin-top: 24px; padding: 16px; background: #f9fafb; border-radius: 8px; font-size: 14px; }
+          .footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #e5e7eb; text-align: center; color: #9ca3af; font-size: 12px; }
+          @media print { body { padding: 20px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <h1>INVOICE</h1>
+            <div class="subtitle">Inventory &amp; Order Management</div>
+          </div>
+          <div style="text-align:right">
+            <div class="meta-label">Invoice #</div>
+            <div style="font-size:20px;font-weight:700">${order.id}</div>
+          </div>
+        </div>
+
+        <div class="meta">
+          <div>
+            <div class="meta-label">Order Date</div>
+            <div class="meta-value">${new Date(order.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+          </div>
+          <div>
+            <div class="meta-label">Status</div>
+            <span class="status-badge">${status}</span>
+          </div>
+          <div>
+            <div class="meta-label">Bill To</div>
+            <div class="meta-value">${order.customer_name}</div>
+            <div style="color:#6b7280">${order.customer_email}</div>
+          </div>
+          <div>
+            <div class="meta-label">Total Amount</div>
+            <div style="font-size:24px;font-weight:700;color:#059669">$${order.total_amount.toFixed(2)}</div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>SKU</th>
+              <th>Qty</th>
+              <th>Unit Price</th>
+              <th style="text-align:right">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsRows}
+            <tr class="total-row">
+              <td colspan="4" style="text-align:right">Total</td>
+              <td style="text-align:right">$${order.total_amount.toFixed(2)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        ${order.notes ? `<div class="notes"><strong>Notes:</strong> ${order.notes}</div>` : ''}
+
+        <div class="footer">
+          Generated on ${new Date().toLocaleString()} &middot; Thank you for your business!
+        </div>
+
+        <script>window.onload = () => { window.print(); }</script>
+      </body>
+      </html>
+    `
+
+    const win = window.open('', '_blank', 'width=900,height=700')
+    if (!win) {
+      toast.error('Please allow pop-ups to print invoices')
+      return
+    }
+    win.document.write(html)
+    win.document.close()
+  }
 
   return (
     <div className="space-y-5">
-      <div className="print-area">
-        <div className="hidden print:block mb-6">
-          <h1 className="text-3xl font-bold">INVOICE</h1>
-          <p className="text-sm text-gray-500">Inventory & Orders System</p>
-        </div>
-
+      <div>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div><span className="text-gray-500 dark:text-gray-400">Order #</span><p className="font-semibold dark:text-gray-100">{order.id}</p></div>
           <div><span className="text-gray-500 dark:text-gray-400">Date</span><p className="font-semibold dark:text-gray-100">{new Date(order.created_at).toLocaleDateString()}</p></div>
@@ -308,12 +407,14 @@ export default function Orders() {
   const handleExport = () => {
     exportCSV(filtered, [
       { key: 'id', label: 'Order ID' },
-      { key: 'customer_name', label: 'Customer' },
-      { key: 'customer_email', label: 'Email' },
-      { key: 'status', label: 'Status' },
-      { key: 'total_amount', label: 'Total' },
-      { key: 'created_at', label: 'Created' },
-      { label: 'Items', value: o => o.items.map(i => `${i.product_name} x${i.quantity}`).join('; ') },
+      { key: 'customer_name', label: 'Customer Name' },
+      { key: 'customer_email', label: 'Customer Email' },
+      { key: 'status', label: 'Status', format: s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '' },
+      { label: 'Items Count', value: o => o.items.length },
+      { label: 'Items Detail', value: o => o.items.map(i => `${i.product_name} (${i.product_sku}) x${i.quantity} @ $${i.unit_price.toFixed(2)}`).join('; ') },
+      { key: 'total_amount', label: 'Total (USD)', format: formatCurrency },
+      { key: 'notes', label: 'Notes' },
+      { key: 'created_at', label: 'Order Date', format: formatDate },
     ], `orders-${new Date().toISOString().slice(0,10)}.csv`)
   }
 
