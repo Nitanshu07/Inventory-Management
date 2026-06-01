@@ -5,6 +5,8 @@ from sqlalchemy import func
 from . import models, schemas
 from .database import engine, get_db
 from .routers import products, customers, orders
+from .routers import auth as auth_router
+from .auth import get_current_user
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -22,9 +24,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(products.router, prefix="/api")
-app.include_router(customers.router, prefix="/api")
-app.include_router(orders.router, prefix="/api")
+# Public routes
+app.include_router(auth_router.router, prefix="/api")
+
+# Protected routes — require valid JWT
+app.include_router(products.router, prefix="/api", dependencies=[Depends(get_current_user)])
+app.include_router(customers.router, prefix="/api", dependencies=[Depends(get_current_user)])
+app.include_router(orders.router, prefix="/api", dependencies=[Depends(get_current_user)])
 
 
 @app.get("/")
@@ -32,7 +38,7 @@ def root():
     return {"message": "Inventory & Order Management System API", "docs": "/docs"}
 
 
-@app.get("/api/stats", response_model=schemas.DashboardStats)
+@app.get("/api/stats", dependencies=[Depends(get_current_user)])
 def get_stats(db: Session = Depends(get_db)):
     total_products = db.query(models.Product).count()
     total_customers = db.query(models.Customer).count()
