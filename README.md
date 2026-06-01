@@ -2,9 +2,14 @@
 
 A full-stack web application for managing products, customers, orders, and inventory tracking — with user authentication, real-time stock management, dark mode, and more.
 
+[![Docker Image](https://img.shields.io/docker/v/nitanshu07/inventory-backend?label=docker%20image&logo=docker&color=2496ED)](https://hub.docker.com/r/nitanshu07/inventory-backend)
+[![Image Size](https://img.shields.io/docker/image-size/nitanshu07/inventory-backend/latest?logo=docker)](https://hub.docker.com/r/nitanshu07/inventory-backend)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 🌐 **Live App:** [inventory-management-nine-rouge.vercel.app](https://inventory-management-nine-rouge.vercel.app)
 🔌 **API:** [inventory-management-production-8b76.up.railway.app](https://inventory-management-production-8b76.up.railway.app)
 📚 **API Docs:** [/docs](https://inventory-management-production-8b76.up.railway.app/docs)
+🐳 **Docker Image:** [`nitanshu07/inventory-backend`](https://hub.docker.com/r/nitanshu07/inventory-backend)
 
 ## Tech Stack
 
@@ -123,6 +128,21 @@ A full-stack web application for managing products, customers, orders, and inven
 Interactive Swagger docs at `/docs`.
 
 ## Quick Start with Docker
+
+### Option 1: Pull the pre-built image from Docker Hub
+
+```bash
+docker run -d \
+  --name inventory-backend \
+  -p 8000:8000 \
+  -e DATABASE_URL="postgresql://user:pass@host:5432/dbname" \
+  -e SECRET_KEY="your-secret-key" \
+  nitanshu07/inventory-backend:latest
+```
+
+The image is auto-built on every push to `main` via GitHub Actions and lives at [`nitanshu07/inventory-backend`](https://hub.docker.com/r/nitanshu07/inventory-backend).
+
+### Option 2: Build and run the whole stack locally
 
 ```bash
 # 1. Clone

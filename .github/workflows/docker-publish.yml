@@ -35,3 +35,12 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/inventory-backend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Update Docker Hub description
+        uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ secrets.DOCKERHUB_USERNAME }}/inventory-backend
+          short-description: "FastAPI backend for full-stack Inventory & Order Management System with PostgreSQL, JWT auth, atomic stock tracking, and order lifecycle management"
+          readme-filepath: ./backend/README.md
