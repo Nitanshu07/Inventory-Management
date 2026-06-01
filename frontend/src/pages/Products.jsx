@@ -63,7 +63,9 @@ export default function Products() {
   const [saving, setSaving] = useState(false)
 
   const load = useCallback(() => {
-    productsApi.list({ search: search || undefined }).then(r => setProducts(r.data)).catch(() => {})
+    productsApi.list({ search: search || undefined })
+      .then(r => setProducts(Array.isArray(r.data) ? r.data : []))
+      .catch(() => setProducts([]))
   }, [search])
 
   useEffect(() => { load() }, [load])

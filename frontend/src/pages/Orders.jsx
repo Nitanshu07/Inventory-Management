@@ -201,7 +201,9 @@ export default function Orders() {
   const [modal, setModal] = useState(null)
 
   const load = useCallback(() => {
-    ordersApi.list().then(r => setOrders(r.data)).catch(() => {})
+    ordersApi.list()
+      .then(r => setOrders(Array.isArray(r.data) ? r.data : []))
+      .catch(() => setOrders([]))
   }, [])
 
   useEffect(() => { load() }, [load])

@@ -23,8 +23,9 @@ export default function Dashboard() {
   useEffect(() => {
     statsApi.get().then(r => setStats(r.data)).catch(() => {})
     productsApi.list({ limit: 100 }).then(r => {
-      setLowStock(r.data.filter(p => p.stock_quantity <= 10))
-    }).catch(() => {})
+      const data = Array.isArray(r.data) ? r.data : []
+      setLowStock(data.filter(p => p.stock_quantity <= 10))
+    }).catch(() => setLowStock([]))
   }, [])
 
   return (

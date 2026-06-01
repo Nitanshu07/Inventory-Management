@@ -50,7 +50,9 @@ export default function Customers() {
   const [saving, setSaving] = useState(false)
 
   const load = useCallback(() => {
-    customersApi.list({ search: search || undefined }).then(r => setCustomers(r.data)).catch(() => {})
+    customersApi.list({ search: search || undefined })
+      .then(r => setCustomers(Array.isArray(r.data) ? r.data : []))
+      .catch(() => setCustomers([]))
   }, [search])
 
   useEffect(() => { load() }, [load])
