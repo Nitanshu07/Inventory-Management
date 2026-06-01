@@ -110,33 +110,70 @@ function CreateOrderModal({ onClose, onCreated }) {
             <Plus size={12} /> Add item
           </button>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-3">
+          {products.length === 0 && (
+            <div className="text-sm text-gray-500 dark:text-gray-400 p-3 rounded-lg bg-gray-50 dark:bg-gray-800 border dark:border-gray-700">
+              No products available. Please add a product first.
+            </div>
+          )}
           {items.map((item, idx) => {
             const prod = products.find(p => p.id === parseInt(item.product_id))
+            const subtotal = prod ? prod.price * (parseInt(item.quantity) || 0) : 0
             return (
-              <div key={idx} className="flex gap-2 items-center">
-                <select value={item.product_id} onChange={e => setItem(idx, 'product_id', e.target.value)} className={`flex-1 ${inputClass}`}>
-                  <option value="">Select product…</option>
-                  {products.map(p => (
-                    <option key={p.id} value={p.id} disabled={p.stock_quantity === 0}>
-                      {p.name} — ${p.price.toFixed(2)} (stock: {p.stock_quantity})
-                    </option>
-                  ))}
-                </select>
-                <input type="number" min="1" max={prod?.stock_quantity || 9999} value={item.quantity}
-                  onChange={e => setItem(idx, 'quantity', e.target.value)}
-                  className={`w-20 ${inputClass}`} />
-                {items.length > 1 && (
-                  <button type="button" onClick={() => removeItem(idx)} className="p-1 text-gray-400 hover:text-red-500">
-                    <X size={16} />
-                  </button>
+              <div key={idx} className="p-3 rounded-lg border dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 space-y-2">
+                <div className="flex items-start gap-2">
+                  <div className="flex-1 min-w-0">
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Product</label>
+                    <select
+                      value={item.product_id}
+                      onChange={e => setItem(idx, 'product_id', e.target.value)}
+                      className="w-full border dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select product…</option>
+                      {products.map(p => (
+                        <option key={p.id} value={p.id} disabled={p.stock_quantity === 0}>
+                          {p.name} — ${p.price.toFixed(2)} {p.stock_quantity === 0 ? '(out of stock)' : `(${p.stock_quantity} in stock)`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="w-24 shrink-0">
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Quantity</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max={prod?.stock_quantity || 9999}
+                      value={item.quantity}
+                      onChange={e => setItem(idx, 'quantity', e.target.value)}
+                      className="w-full border dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  {items.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeItem(idx)}
+                      className="mt-6 p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 shrink-0"
+                      title="Remove item"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
+                {prod && (
+                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-1 border-t dark:border-gray-700">
+                    <span>${prod.price.toFixed(2)} × {item.quantity || 0}</span>
+                    <span className="font-semibold text-gray-700 dark:text-gray-200">${subtotal.toFixed(2)}</span>
+                  </div>
                 )}
               </div>
             )
           })}
         </div>
         {total > 0 && (
-          <p className="text-right text-sm font-semibold mt-2 dark:text-gray-100">Total: ${total.toFixed(2)}</p>
+          <div className="flex items-center justify-between p-3 mt-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900/50">
+            <span className="text-sm font-medium text-blue-900 dark:text-blue-200">Order Total</span>
+            <span className="text-xl font-bold text-blue-900 dark:text-blue-100">${total.toFixed(2)}</span>
+          </div>
         )}
       </div>
 
